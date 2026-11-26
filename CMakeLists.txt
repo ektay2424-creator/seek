@@ -15,6 +15,9 @@ find_package(Threads REQUIRED)
 add_executable(seek src/main.cpp)
 target_link_libraries(seek PRIVATE seek_core Threads::Threads)
 
+add_executable(seek_bench benchmarks/bench.cpp)
+target_link_libraries(seek_bench PRIVATE seek_core Threads::Threads)
+
 enable_testing()
 add_executable(seek_tests tests/test_core.cpp)
 target_link_libraries(seek_tests PRIVATE seek_core Threads::Threads)
@@ -22,5 +25,10 @@ add_test(NAME seek_tests COMMAND seek_tests)
 
 if(MINGW)
   target_link_options(seek       PRIVATE -static)
+  target_link_options(seek_bench PRIVATE -static)
   target_link_options(seek_tests PRIVATE -static)
+endif()
+
+if(WIN32)
+  target_link_libraries(seek_bench PRIVATE psapi)
 endif()

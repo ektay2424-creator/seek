@@ -7,6 +7,10 @@
 #include "seek/thread_pool.hpp"
 #include "seek/index_store.hpp"
 #include "seek/embedder.hpp"
+#include "seek/fs_watcher.hpp"
+#include <filesystem>
+#include <fstream>
+#include <thread>
 
 #include <atomic>
 #include <cstdio>
@@ -201,6 +205,34 @@ TEST(hybrid_rrf_returns_real_chunks) {
     CHECK(found);
 }
 
+TEST(polling_watcher_detects_changes) {
+    namespace fs = std::filesystem;
+    auto dir = fs::temp_directory_path() / "seek_watch_test";
+    fs::remove_all(dir);
+    fs::create_directories(dir);
+
+    auto f = dir / "a.md";
+    { std::ofstream o(f); o << "hello world\n"; }
+
+    PollingWatcher w({dir.string()});
+    auto s1 = w.scan();
+    CHECK(s1.size() == 1);
+
+    auto s2 = w.scan();                 // no change
+    CHECK(s2.empty());
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    { std::ofstream o(f, std::ios::app); o << "second line\n"; }
+    auto s3 = w.scan();
+    CHECK(s3.size() == 1);
+
+    fs::remove(f);
+    auto s4 = w.scan();
+    CHECK(s4.size() == 1);
+
+    fs::remove_all(dir);
+}
+
 // ---- runner ----
 int main() {
     test_tokenizer_basic();
@@ -215,6 +247,7 @@ int main() {
     test_serialize_roundtrip();
     test_hash_embedder_deterministic_and_normalized();
     test_hybrid_rrf_returns_real_chunks();
+    test_polling_watcher_detects_changes();
 
     std::printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail == 0 ? 0 : 1;
