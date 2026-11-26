@@ -1,0 +1,28 @@
+# Build artifacts
+build/
+build-*/
+out/
+*.obj
+*.o
+*.exe
+*.pdb
+*.ilk
+!seek.exe
+
+# Index files (regenerate with `seek index`)
+*.seekidx
+*.seekidx.*
+
+# Model files & third-party binaries (regenerate via setup script)
+models/
+third_party/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs
+*.log
+path_*.txt
