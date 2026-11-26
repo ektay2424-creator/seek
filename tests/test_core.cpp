@@ -6,6 +6,7 @@
 #include "seek/vector_index.hpp"
 #include "seek/thread_pool.hpp"
 #include "seek/index_store.hpp"
+#include "seek/embedder.hpp"
 
 #include <atomic>
 #include <cstdio>
@@ -13,6 +14,7 @@
 #include <filesystem>
 #include <string>
 #include <vector>
+#include <cmath>
 
 using namespace seek;
 
@@ -158,6 +160,47 @@ TEST(serialize_roundtrip) {
     std::filesystem::remove(path);
 }
 
+
+
+TEST(hash_embedder_deterministic_and_normalized) {
+    HashEmbedder e(64);
+    auto a = e.embed("dynamic programming knapsack");
+    auto b = e.embed("dynamic programming knapsack");
+    CHECK(a.size() == 64);
+    CHECK(a == b);                                // deterministic
+
+    float n2 = 0; for (float x : a) n2 += x * x;
+    CHECK(std::abs(std::sqrt(n2) - 1.0f) < 1e-4f); // unit norm
+}
+
+TEST(hybrid_rrf_returns_real_chunks) {
+    SeekIndex idx;
+    HashEmbedder emb(64);
+
+    std::vector<std::string> texts = {
+        "the quick brown fox jumps over the lazy dog",
+        "dynamic programming 0/1 knapsack memoized table",
+        "bst lowest common ancestor binary search tree"
+    };
+    for (size_t i = 0; i < texts.size(); ++i) {
+        idx.chunks.push_back({(ChunkId)i, 0, 1, texts[i]});
+        idx.inv.add_chunk((ChunkId)i, texts[i]);
+        idx.vec.add((ChunkId)i, emb.embed(texts[i]));
+    }
+    idx.docs.push_back({0, "test.txt", 0});
+
+    auto qv = emb.embed("knapsack");
+    auto lex = idx.inv.search(tokenize("knapsack"), 3);
+    auto sem = idx.vec.search(qv, 3);
+    auto fused = rrf_fuse({lex, sem}, 3);
+
+    CHECK(!fused.empty());
+    // chunk 1 mentions knapsack, so lexical ranks it #1 -> it must be in the top-K
+    bool found = false;
+    for (auto& h : fused) if (h.id == 1) found = true;
+    CHECK(found);
+}
+
 // ---- runner ----
 int main() {
     test_tokenizer_basic();
@@ -170,6 +213,8 @@ int main() {
     test_rrf_fusion_agrees_on_top();
     test_thread_pool_runs_all();
     test_serialize_roundtrip();
+    test_hash_embedder_deterministic_and_normalized();
+    test_hybrid_rrf_returns_real_chunks();
 
     std::printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail == 0 ? 0 : 1;
