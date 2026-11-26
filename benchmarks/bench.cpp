@@ -1,6 +1,6 @@
 // benchmarks/bench.cpp
 #include "seek/crawler.hpp"
-#include "seek/embedder.hpp"
+#include "seek/embedder_factory.hpp"
 #include "seek/index_store.hpp"
 #include "seek/indexer.hpp"
 
@@ -97,7 +97,8 @@ static int bench_query(const std::string& index_path, int n_queries) {
         auto lexical = idx.inv.search(terms, 20);
         auto qvec    = embedder->embed(q);
         auto semantic= idx.vec.search(qvec, 20);
-        auto hits    = rrf_fuse({lexical, semantic}, 5);
+        std::vector<std::vector<ScoredChunk>> lists = {lexical, semantic};
+        auto hits = rrf_fuse(lists, 5);
         (void)hits;
         auto t1 = Clock::now();
         lat_ms.push_back(std::chrono::duration<double, std::milli>(t1 - t0).count());

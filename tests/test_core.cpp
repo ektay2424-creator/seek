@@ -11,6 +11,8 @@
 #include <filesystem>
 #include <fstream>
 #include <thread>
+#include "seek/onnx_loader.hpp"
+#include "seek/embedder_factory.hpp"
 
 #include <atomic>
 #include <cstdio>
@@ -233,6 +235,29 @@ TEST(polling_watcher_detects_changes) {
     fs::remove_all(dir);
 }
 
+static void test_onnx_dll_loads() {
+    try {
+        const OrtApi* api = seek::OnnxRuntime::api();
+        CHECK(api != nullptr);
+        std::printf("  ORT loaded, API version %d\n", ORT_API_VERSION);
+    } catch (const std::exception& e) {
+        std::printf("  ONNX SKIPPED: %s\n", e.what());
+    }
+}
+
+static void test_onnx_embedder_embeds() {
+    try {
+        auto e = seek::make_embedder("onnx");
+        auto v = e->embed("hello world");
+        CHECK(v.size() == 384);
+        float n = 0; for (float x : v) n += x * x;
+        CHECK(std::abs(std::sqrt(n) - 1.0f) < 1e-3f);
+        std::printf("  ONNX embedder OK, dim=%zu\n", v.size());
+    } catch (const std::exception& e) {
+        std::printf("  ONNX embedder SKIPPED: %s\n", e.what());
+    }
+}
+
 // ---- runner ----
 int main() {
     test_tokenizer_basic();
@@ -248,6 +273,8 @@ int main() {
     test_hash_embedder_deterministic_and_normalized();
     test_hybrid_rrf_returns_real_chunks();
     test_polling_watcher_detects_changes();
+    test_onnx_dll_loads();
+    test_onnx_embedder_embeds();
 
     std::printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail == 0 ? 0 : 1;

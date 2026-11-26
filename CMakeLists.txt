@@ -8,7 +8,10 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 add_library(seek_core INTERFACE)
-target_include_directories(seek_core INTERFACE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(seek_core INTERFACE
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/third_party/onnxruntime/onnxruntime-win-x64-1.27.0/include
+)
 
 find_package(Threads REQUIRED)
 
@@ -31,4 +34,10 @@ endif()
 
 if(WIN32)
   target_link_libraries(seek_bench PRIVATE psapi)
+endif()
+
+if(MINGW)
+  target_link_options(seek       PRIVATE -static)
+  target_link_options(seek_bench PRIVATE -static)
+  target_link_options(seek_tests PRIVATE -static)
 endif()
