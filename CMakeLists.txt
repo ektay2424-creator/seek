@@ -12,6 +12,7 @@ target_include_directories(seek_core INTERFACE
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/third_party/onnxruntime/onnxruntime-win-x64-1.27.0/include
 )
+target_compile_definitions(seek_core INTERFACE NOMINMAX)
 
 find_package(Threads REQUIRED)
 
