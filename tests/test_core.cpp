@@ -108,7 +108,8 @@ TEST(rrf_fusion_agrees_on_top) {
     std::vector<ScoredChunk> lex = {{0, 10}, {1, 8}};
     std::vector<ScoredChunk> vec = {{2, 0.9f}, {1, 0.8f}};
 
-    auto fused = rrf_fuse({lex, vec}, 3);
+    std::vector<std::vector<ScoredChunk>> lists = {lex, vec};
+    auto fused = rrf_fuse(lists, 3);
     CHECK(fused.size() == 3);
     CHECK(fused[0].id == 1);
 }
@@ -118,7 +119,8 @@ TEST(rrf_top1_beats_middle_consistency) {
     std::vector<ScoredChunk> a = {{0, 10}, {1, 8}, {2, 3}};
     std::vector<ScoredChunk> b = {{2, 0.9f}, {1, 0.8f}, {0, 0.5f}};
 
-    auto fused = rrf_fuse({a, b}, 3);
+    std::vector<std::vector<ScoredChunk>> lists = {a, b};
+    auto fused = rrf_fuse(lists, 3);
     CHECK(fused.size() == 3);
     CHECK(fused.back().id == 1);   // #2-in-both loses to #1-in-one
 }
@@ -198,7 +200,8 @@ TEST(hybrid_rrf_returns_real_chunks) {
     auto qv = emb.embed("knapsack");
     auto lex = idx.inv.search(tokenize("knapsack"), 3);
     auto sem = idx.vec.search(qv, 3);
-    auto fused = rrf_fuse({lex, sem}, 3);
+    std::vector<std::vector<ScoredChunk>> lists = {lex, sem};
+    auto fused = rrf_fuse(lists, 3);
 
     CHECK(!fused.empty());
     // chunk 1 mentions knapsack, so lexical ranks it #1 -> it must be in the top-K

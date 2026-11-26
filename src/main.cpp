@@ -43,7 +43,8 @@ static int cmd_query(const std::string& q, const std::string& index_path,
     auto qvec     = embedder->embed(q);
     auto semantic = idx.vec.search(qvec, top_k * 4);
 
-    auto hits = rrf_fuse({lexical, semantic}, top_k);
+    std::vector<std::vector<ScoredChunk>> lists = {lexical, semantic};
+    auto hits = rrf_fuse(lists, top_k);
 
     for (auto& h : hits) {
         auto& c = idx.chunks[h.id];

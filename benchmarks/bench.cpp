@@ -117,7 +117,7 @@ static int bench_synth(int n) {
     fs::remove_all(dir, ec);
     fs::create_directories(dir, ec);
 
-    std::ofstream(dummy); // no-op to satisfy unused warnings on some compilers
+    
     for (int i = 0; i < n; ++i) {
         std::ofstream out(dir / ("f" + std::to_string(i) + ".md"));
         out << "doc " << i << " dynamic programming 0/1 knapsack memoized table\n"
