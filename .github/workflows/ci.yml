@@ -17,7 +17,7 @@ jobs:
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: cmake --build build --config Release -j
+        run: cmake --build build --config Release
 
       - name: Test
         run: ctest --test-dir build --output-on-failure -C Release
@@ -26,5 +26,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: seek-windows-x64
-          path: build/seek.exe
-          if-no-files-found: error
+          path: build/**/seek.exe
+          if-no-files-found: warn

@@ -14,7 +14,8 @@ inline bool indexable(const std::filesystem::path& p) {
 
 inline bool ignored(const std::filesystem::path& p) {
     auto n = p.filename().string();
-    return n == ".git" || n == "node_modules" || n == "build" || n == ".seekidx";
+    return n == ".git" || n == "node_modules" || n == "build" || n == ".seekidx"
+        || n == "onnxruntime_c_api.h";
 }
 
 inline std::vector<std::filesystem::path> crawl(const std::vector<std::string>& roots) {
